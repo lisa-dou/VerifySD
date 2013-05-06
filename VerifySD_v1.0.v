@@ -1,10 +1,4 @@
-(* Copyright (c) 2013, Department of Computer Science and Engineering
- * East China Normal University, Shanghai, China.
- * All rights reserved.
- * Author: Dou Liang, Zuo Ying
- * Email: ldou@cs.ecnu.edu.cn; zyzuoying@gmail.com
- * Description: Verification of UML Sequence Diagrams in Coq
-*)
+
 Require Export String Bool ListSet List Arith Permutation.
 Open Scope type_scope.
 
@@ -612,6 +606,29 @@ Eval compute in interp empty_state (De h).
 (*((ev (?, "h", "l1", "l2") :: nil) :: nil) :: nil*)
 Eval compute in interp empty_state (Dpar (Dalt Btrue (De f) (De g)) (De h)).
 
+
+(*test cases of interp: a full example*)
+Definition sid := (!, "id", "client", "server").
+Definition rid := (?, "id", "client", "server").
+Definition spwd := (!, "pwd", "client", "server").
+Definition rpwd := (?, "pwd", "client", "server").
+Definition rloginsucc := (?, "loginsucc", "server", "client").
+Definition sloginsucc := (!, "loginsucc", "server", "client").
+Definition scmd := (!, "cmd", "client", "server").
+Definition rcmd := (?, "cmd", "client", "server").
+Definition rloginfail := (?, "loginfail", "server", "client").
+Definition sloginfail := (!, "loginfail", "server", "client").
+
+Definition flag1 : id := Id 10.
+Definition flag2 : id := Id 20.
+
+Definition LoginDiag := 
+Dstrict (Dstrict (Dstrict (De sid)(De rid)) (Dstrict (De spwd)(De rpwd)))
+(Dalt (Bvar flag1) (Dstrict (Dstrict (De sloginsucc) (De rloginsucc))
+(Dopt (Bvar flag2) (Dstrict (De scmd) (De rcmd)))) (Dstrict (De sloginfail) (De rloginfail))).
+
+Eval compute in interp empty_state LoginDiag.
+
 (*====Syntax Constraints=====*)
 (*if both the transmitter and the receiver lifelines of a signal are present
 in a diagram, then the corresponding receive event of any transmit event must be
@@ -637,7 +654,7 @@ end.
 Definition chkEvts (D : sd) : bool :=
   chkEvtAux D (getEvts D).
 
-Compute chkEvts (dpar).
+Compute chkEvts (LoginDiag ).
 Compute chkEvts (dseq).
 
 (*=====Semantic Constraint on Traces====== *)
@@ -694,6 +711,7 @@ Compute chkTr ((ev f1)::(ev f2)::(cd Btrue)::nil).
 Compute checkSd d1.
 Compute checkSd dpar.
 Compute checkSd dseq.
+Compute checkSd LoginDiag.
 
 (*==========Properties of semantics==============**)
 Lemma setUnionEv_Nil: 
